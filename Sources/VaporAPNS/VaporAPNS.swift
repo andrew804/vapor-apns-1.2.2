@@ -155,6 +155,7 @@ open class VaporAPNS {
             // Do some cleanup
 //            curl_easy_cleanup(curlHandle)
             curl_slist_free_all(curlHeaders!)
+            resetCURLHandleHack()
             
             return result
         } else {
@@ -163,6 +164,7 @@ open class VaporAPNS {
             
 //            curl_easy_cleanup(curlHandle)
             curl_slist_free_all(curlHeaders!)
+            resetCURLHandleHack()
             
             // todo: Better unknown error handling?
             return Result.networkError(error: SimpleError.string(message: errorString))
@@ -182,6 +184,12 @@ open class VaporAPNS {
         return str.withUnsafeBufferPointer() { buffer -> Data? in
             return buffer.baseAddress != nil ? Data(bytes: buffer.baseAddress!, count: buffer.count) : nil
         }
+    }
+    
+    func resetCURLHandleHack() {
+        curlHandle = curl_easy_init()
+        curlHelperSetOptBool(curlHandle, CURLOPT_VERBOSE, options.debugLogging ? CURL_TRUE : CURL_FALSE)
+        curlHelperSetOptInt(curlHandle, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0)
     }
     
     fileprivate func requestHeaders(for message: ApplePushMessage) -> [String: String] {
